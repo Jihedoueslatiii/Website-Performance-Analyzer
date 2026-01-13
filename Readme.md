@@ -1,4 +1,4 @@
-# 🚀 Website Performance Analyzer
+# 🚀 Website Performance Analyzer - InsightWeb
 
 A self-hosted tool that analyzes website performance, SEO, accessibility, and best practices with **exact point breakdowns**.
 
