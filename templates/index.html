@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Performance Analyzer</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            margin-bottom: 48px;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            letter-spacing: -0.025em;
+        }
+
+        .subtitle {
+            font-size: 1.125rem;
+            color: var(--gray-600);
+            margin-left: 64px;
+        }
+
+        .analyzer-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            margin-bottom: 32px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        input[type="url"] {
+            flex: 1;
+            padding: 14px 16px;
+            font-size: 15px;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        input[type="url"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            padding: 14px 32px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 64px 32px;
+            display: none;
+        }
+
+        .loading-state.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 24px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 15px;
+            color: var(--gray-600);
+        }
+
+        .results-container {
+            display: none;
+        }
+
+        .results-container.active {
+            display: block;
+        }
+
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .score-card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .score-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .score-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .score-icon.performance { background: rgba(139, 92, 246, 0.1); }
+        .score-icon.seo { background: rgba(59, 130, 246, 0.1); }
+        .score-icon.accessibility { background: rgba(16, 185, 129, 0.1); }
+        .score-icon.practices { background: rgba(245, 158, 11, 0.1); }
+
+        .score-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .score-subtitle {
+            font-size: 12px;
+            color: var(--gray-500);
+            font-weight: 400;
+        }
+
+        .score-display {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .score-circle {
+            position: relative;
+            width: 100px;
+            height: 100px;
+        }
+
+        .score-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .score-circle svg {
+            transform: rotate(-90deg);
+        }
+
+        .score-info {
+            flex: 1;
+        }
+
+        .score-criteria {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .criteria-list {
+            list-style: none;
+            font-size: 13px;
+            color: var(--gray-600);
+            line-height: 1.8;
+        }
+
+        .criteria-list li {
+            padding-left: 16px;
+            position: relative;
+        }
+
+        .criteria-list li:before {
+            content: "•";
+            position: absolute;
+            left: 4px;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .criteria-list strong {
+            color: var(--gray-800);
+            font-weight: 600;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--gray-100);
+        }
+
+        .section-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--gray-100);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .metric-item {
+            padding: 16px;
+            background: var(--gray-50);
+            border-radius: 10px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .metric-label {
+            font-size: 13px;
+            color: var(--gray-600);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .issues-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .issue-item {
+            padding: 16px;
+            border-radius: 10px;
+            border-left: 4px solid;
+            display: flex;
+            gap: 12px;
+            align-items: start;
+        }
+
+        .issue-item.success {
+            background: rgba(16, 185, 129, 0.05);
+            border-color: var(--success);
+        }
+
+        .issue-item.warning {
+            background: rgba(245, 158, 11, 0.05);
+            border-color: var(--warning);
+        }
+
+        .issue-item.error {
+            background: rgba(239, 68, 68, 0.05);
+            border-color: var(--danger);
+        }
+
+        .issue-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .issue-content {
+            flex: 1;
+        }
+
+        .issue-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .issue-description {
+            font-size: 14px;
+            color: var(--gray-600);
+            line-height: 1.5;
+        }
+
+        .error-banner {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .error-banner.active {
+            display: flex;
+        }
+
+        .breakdown-category {
+            margin-bottom: 24px;
+        }
+
+        .breakdown-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: var(--gray-50);
+            border-radius: 8px;
+        }
+
+        .breakdown-header-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .breakdown-header-icon.performance { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
+        .breakdown-header-icon.seo { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .breakdown-header-icon.accessibility { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .breakdown-header-icon.practices { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
+        .breakdown-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            font-size: 15px;
+        }
+
+        .breakdown-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+        }
+
+        .breakdown-item.pass {
+            border-left: 3px solid var(--success);
+        }
+
+        .breakdown-item.fail {
+            border-left: 3px solid var(--danger);
+        }
+
+        .breakdown-item.warning {
+            border-left: 3px solid var(--warning);
+        }
+
+        .breakdown-check {
+            flex: 1;
+        }
+
+        .breakdown-check-name {
+            font-weight: 500;
+            color: var(--gray-900);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .breakdown-check-reason {
+            font-size: 13px;
+            color: var(--gray-600);
+        }
+
+        .breakdown-points {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .breakdown-points-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .breakdown-points-badge.pass {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .breakdown-points-badge.fail {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .breakdown-status-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .overview-card {
+            background: var(--gray-50);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .overview-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .overview-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 13px;
+        }
+
+        .overview-stat:last-child {
+            border-bottom: none;
+        }
+
+        .overview-stat-label {
+            color: var(--gray-600);
+        }
+
+        .overview-stat-value {
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .overview-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+
+        .overview-list-item {
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .overview-list-item strong {
+            color: var(--gray-900);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .overview-list-item span {
+            color: var(--gray-600);
+        }
+
+        .overview-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .overview-badge.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .overview-badge.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .overview-badge.danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .preview-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .preview-screenshot {
+            width: 100%;
+            border-radius: 12px;
+            border: 2px solid var(--gray-200);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview-info {
+            background: var(--gray-50);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .preview-url {
+            font-size: 13px;
+            color: var(--gray-600);
+            margin-bottom: 12px;
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .preview-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .preview-favicon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+        }
+
+        .preview-description {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .preview-h1 {
+            font-size: 13px;
+            color: var(--gray-700);
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+            margin-top: 12px;
+        }
+
+        .preview-h1 strong {
+            display: block;
+            font-size: 11px;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .preview-timestamp {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .subtitle {
+                margin-left: 0;
+                margin-top: 8px;
+            }
+
+            .input-wrapper {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .scores-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .preview-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                </div>
+                <h1>Website Analyzer</h1>
+            </div>
+            <p class="subtitle">Comprehensive performance, SEO, and accessibility analysis</p>
+        </header>
+
+        <div class="analyzer-card">
+            <form id="analyzeForm">
+                <div class="input-wrapper">
+                    <input 
+                        type="url" 
+                        id="urlInput" 
+                        placeholder="Enter website URL (e.g., https://example.com)"
+                        required
+                    >
+                    <button type="submit" class="btn" id="analyzeBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="M21 21l-4.35-4.35"/>
+                        </svg>
+                        Analyze
+                    </button>
+                </div>
+            </form>
+            
+            <div class="error-banner" id="errorMessage">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+                <span id="errorText"></span>
+            </div>
+        </div>
+
+        <div class="loading-state" id="loading">
+            <div class="spinner"></div>
+            <p class="loading-text">Analyzing website performance and best practices...</p>
+        </div>
+
+        <div class="results-container" id="results">
+            <div class="section" id="pagePreview" style="display: none;">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                            <line x1="8" y1="21" x2="16" y2="21"/>
+                            <line x1="12" y1="17" x2="12" y2="21"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">Page Preview</h2>
+                </div>
+                <div id="previewContent"></div>
+            </div>
+
+            <div class="scores-grid">
+                <div class="score-card">
+                    <div class="score-header">
+                        <div class="score-icon performance">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="score-title">Performance</div>
+                            <div class="score-subtitle">Speed & Load Time</div>
+                        </div>
+                    </div>
+                    <div class="score-display">
+                        <div class="score-circle">
+                            <svg width="100" height="100">
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                                <circle id="performanceCircle" cx="50" cy="50" r="45" fill="none" stroke-width="8" stroke-dasharray="283" stroke-dashoffset="283"/>
+                            </svg>
+                            <div class="score-value" id="performanceScore">0</div>
+                        </div>
+                        <div class="score-info">
+                            <div class="score-criteria">Measures:</div>
+                            <ul class="criteria-list">
+                                <li><strong>TTFB</strong> - Time to First Byte</li>
+                                <li><strong>FCP</strong> - First Contentful Paint</li>
+                                <li><strong>Page Load</strong> - Total load time</li>
+                                <li><strong>Resources</strong> - Network requests</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="score-card">
+                    <div class="score-header">
+                        <div class="score-icon seo">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"/>
+                                <path d="M21 21l-4.35-4.35"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="score-title">SEO</div>
+                            <div class="score-subtitle">Search Engine Optimization</div>
+                        </div>
+                    </div>
+                    <div class="score-display">
+                        <div class="score-circle">
+                            <svg width="100" height="100">
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                                <circle id="seoCircle" cx="50" cy="50" r="45" fill="none" stroke-width="8" stroke-dasharray="283" stroke-dashoffset="283"/>
+                            </svg>
+                            <div class="score-value" id="seoScore">0</div>
+                        </div>
+                        <div class="score-info">
+                            <div class="score-criteria">Checks:</div>
+                            <ul class="criteria-list">
+                                <li>Page title & length</li>
+                                <li>Meta description</li>
+                                <li>HTTPS security</li>
+                                <li>Mobile viewport</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="score-card">
+                    <div class="score-header">
+                        <div class="score-icon accessibility">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 16v-4"/>
+                                <path d="M12 8h.01"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="score-title">Accessibility</div>
+                            <div class="score-subtitle">Usability for All Users</div>
+                        </div>
+                    </div>
+                    <div class="score-display">
+                        <div class="score-circle">
+                            <svg width="100" height="100">
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                                <circle id="accessibilityCircle" cx="50" cy="50" r="45" fill="none" stroke-width="8" stroke-dasharray="283" stroke-dashoffset="283"/>
+                            </svg>
+                            <div class="score-value" id="accessibilityScore">0</div>
+                        </div>
+                        <div class="score-info">
+                            <div class="score-criteria">Validates:</div>
+                            <ul class="criteria-list">
+                                <li>Image alt attributes</li>
+                                <li>Viewport meta tag</li>
+                                <li>Screen reader support</li>
+                                <li>Keyboard navigation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="score-card">
+                    <div class="score-header">
+                        <div class="score-icon practices">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="score-title">Best Practices</div>
+                            <div class="score-subtitle">Security & Standards</div>
+                        </div>
+                    </div>
+                    <div class="score-display">
+                        <div class="score-circle">
+                            <svg width="100" height="100">
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                                <circle id="bestPracticesCircle" cx="50" cy="50" r="45" fill="none" stroke-width="8" stroke-dasharray="283" stroke-dashoffset="283"/>
+                            </svg>
+                            <div class="score-value" id="bestPracticesScore">0</div>
+                        </div>
+                        <div class="score-info">
+                            <div class="score-criteria">Evaluates:</div>
+                            <ul class="criteria-list">
+                                <li>HTTPS encryption</li>
+                                <li>Script optimization</li>
+                                <li>Resource loading</li>
+                                <li>Modern standards</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">Site Overview</h2>
+                </div>
+                <div id="overviewContent"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="20" x2="12" y2="10"/>
+                            <line x1="18" y1="20" x2="18" y2="4"/>
+                            <line x1="6" y1="20" x2="6" y2="16"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">Performance Metrics</h2>
+                </div>
+                <div class="metrics-grid" id="metricsContent"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">Detailed Score Breakdown</h2>
+                </div>
+                <div id="breakdownContent"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                        </svg>
+                    </div>
+                    <h2 class="section-title">Issues & Recommendations</h2>
+                </div>
+                <div class="issues-list" id="issuesContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('analyzeForm');
+        const urlInput = document.getElementById('urlInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const url = urlInput.value.trim();
+            if (!url) return;
+
+            errorMessage.classList.remove('active');
+            results.classList.remove('active');
+            loading.classList.add('active');
+            analyzeBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || `Server error: ${response.status}`);
+                }
+
+                displayResults(data);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                errorText.textContent = error.message || 'Failed to analyze website. Please check the URL and try again.';
+                errorMessage.classList.add('active');
+            } finally {
+                loading.classList.remove('active');
+                analyzeBtn.disabled = false;
+            }
+        });
+
+        function displayResults(data) {
+            // Display page preview first
+            if (data.screenshot || data.pageInfo) {
+                const pagePreview = document.getElementById('pagePreview');
+                const previewContent = document.getElementById('previewContent');
+                
+                previewContent.innerHTML = `
+                    <div class="preview-container">
+                        ${data.screenshot ? `
+                            <div>
+                                <img src="${data.screenshot}" alt="Page Screenshot" class="preview-screenshot">
+                            </div>
+                        ` : `
+                            <div style="background: var(--gray-100); border-radius: 12px; padding: 60px; text-align: center; color: var(--gray-500);">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 16px;">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                                <p>Screenshot not available</p>
+                            </div>
+                        `}
+                        
+                        <div class="preview-info">
+                            <div class="preview-url">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                                </svg>
+                                ${data.url}
+                            </div>
+                            
+                            ${data.pageInfo ? `
+                                <div class="preview-title">
+                                    ${data.pageInfo.favicon ? `<img src="${data.pageInfo.favicon}" class="preview-favicon" onerror="this.style.display='none'">` : ''}
+                                    ${data.pageInfo.title || 'No Title'}
+                                </div>
+                                
+                                ${data.pageInfo.description ? `
+                                    <div class="preview-description">
+                                        ${data.pageInfo.description}
+                                    </div>
+                                ` : ''}
+                                
+                                ${data.pageInfo.h1 ? `
+                                    <div class="preview-h1">
+                                        <strong>Main Heading (H1)</strong>
+                                        ${data.pageInfo.h1}
+                                    </div>
+                                ` : ''}
+                            ` : ''}
+                            
+                            <div class="preview-timestamp">
+                                Analyzed on ${data.timestamp}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                pagePreview.style.display = 'block';
+            }
+
+            animateScore('performance', data.scores.performance);
+            animateScore('seo', data.scores.seo);
+            animateScore('accessibility', data.scores.accessibility);
+            animateScore('bestPractices', data.scores.bestPractices);
+
+            // Display site overview
+            const overviewContent = document.getElementById('overviewContent');
+            overviewContent.innerHTML = displayOverview(data.overview);
+
+            const metricsContent = document.getElementById('metricsContent');
+            metricsContent.innerHTML = Object.entries(data.metrics)
+                .map(([key, value]) => `
+                    <div class="metric-item">
+                        <div class="metric-label">${formatMetricName(key)}</div>
+                        <div class="metric-value">${value}</div>
+                    </div>
+                `).join('');
+
+            // Display detailed breakdown
+            const breakdownContent = document.getElementById('breakdownContent');
+            breakdownContent.innerHTML = displayBreakdown(data.breakdown);
+
+            const issuesContent = document.getElementById('issuesContent');
+            issuesContent.innerHTML = data.issues.map(issue => `
+                <div class="issue-item ${issue.severity}">
+                    <div class="issue-icon">
+                        ${getIssueIcon(issue.severity)}
+                    </div>
+                    <div class="issue-content">
+                        <div class="issue-title">${issue.title}</div>
+                        <div class="issue-description">${issue.description}</div>
+                        ${issue.impact ? `<div class="issue-description" style="margin-top: 4px; font-weight: 500;">Impact: ${issue.impact}</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            results.classList.add('active');
+        }
+
+        function displayOverview(overview) {
+            if (!overview) return '<p>Overview data not available</p>';
+
+            const totalHeadings = Object.values(overview.headings).reduce((a, b) => a + b, 0);
+            const h1Count = overview.headings.h1;
+            
+            return `
+                <div class="overview-grid">
+                    <!-- Page Structure -->
+                    <div class="overview-card">
+                        <div class="overview-card-title">
+                            📄 Page Structure
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Total Elements</span>
+                            <span class="overview-stat-value">${overview.totalElements}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Language</span>
+                            <span class="overview-stat-value">${overview.language}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Character Set</span>
+                            <span class="overview-stat-value">${overview.charset}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Favicon</span>
+                            <span class="overview-stat-value">${overview.favicon !== 'none' ? '✓ Present' : '✗ Missing'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Links -->
+                    <div class="overview-card">
+                        <div class="overview-card-title">
+                            🔗 Links Analysis
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Total Links</span>
+                            <span class="overview-stat-value">${overview.links.total}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Internal Links</span>
+                            <span class="overview-stat-value">${overview.links.internal}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">External Links</span>
+                            <span class="overview-stat-value">${overview.links.external}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Forms</span>
+                            <span class="overview-stat-value">${overview.forms}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Buttons</span>
+                            <span class="overview-stat-value">${overview.buttons}</span>
+                        </div>
+                    </div>
+
+                    <!-- Headings -->
+                    <div class="overview-card">
+                        <div class="overview-card-title">
+                            📋 Heading Structure
+                            ${h1Count === 0 ? '<span class="overview-badge danger">No H1!</span>' : 
+                              h1Count > 1 ? '<span class="overview-badge warning">Multiple H1</span>' : 
+                              '<span class="overview-badge success">✓</span>'}
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">H1 Tags</span>
+                            <span class="overview-stat-value">${overview.headings.h1}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">H2 Tags</span>
+                            <span class="overview-stat-value">${overview.headings.h2}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">H3 Tags</span>
+                            <span class="overview-stat-value">${overview.headings.h3}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">H4-H6 Tags</span>
+                            <span class="overview-stat-value">${overview.headings.h4 + overview.headings.h5 + overview.headings.h6}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Total Headings</span>
+                            <span class="overview-stat-value">${totalHeadings}</span>
+                        </div>
+                    </div>
+
+                    <!-- Resources -->
+                    <div class="overview-card">
+                        <div class="overview-card-title">
+                            📦 Resources
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">CSS Files</span>
+                            <span class="overview-stat-value">${overview.cssFiles.length}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">JavaScript Files</span>
+                            <span class="overview-stat-value">${overview.jsFiles.length}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Inline Scripts</span>
+                            <span class="overview-stat-value">${overview.inlineScripts}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Total Images</span>
+                            <span class="overview-stat-value">${overview.images.length}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Lazy Loaded</span>
+                            <span class="overview-stat-value">${overview.lazyLoadedImages} (${overview.images.length > 0 ? ((overview.lazyLoadedImages/overview.images.length)*100).toFixed(1) : 0}%)</span>
+                        </div>
+                    </div>
+
+                    <!-- SEO Tags -->
+                    <div class="overview-card">
+                        <div class="overview-card-title">
+                            🎯 SEO & Social
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Open Graph Tags</span>
+                            <span class="overview-stat-value">${overview.ogTags.length}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Twitter Card Tags</span>
+                            <span class="overview-stat-value">${overview.twitterTags.length}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Schema.org Markup</span>
+                            <span class="overview-stat-value">${overview.schemaMarkup > 0 ? '✓ Present' : '✗ Missing'}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Meta Tags</span>
+                            <span class="overview-stat-value">${overview.metaTags.length}</span>
+                        </div>
+                    </div>
+
+                    <!-- Images Details -->
+                    <div class="overview-card">
+                        <div class="overview-card-title">
+                            🖼️ Image Analysis
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Total Images</span>
+                            <span class="overview-stat-value">${overview.images.length}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">With Alt Text</span>
+                            <span class="overview-stat-value">${overview.images.filter(img => img.alt !== 'missing').length}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Missing Alt Text</span>
+                            <span class="overview-stat-value">${overview.images.filter(img => img.alt === 'missing').length}</span>
+                        </div>
+                        <div class="overview-stat">
+                            <span class="overview-stat-label">Lazy Loading</span>
+                            <span class="overview-stat-value">${overview.lazyLoadedImages}/${overview.images.length}</span>
+                        </div>
+                    </div>
+                </div>
+
+                ${overview.cssFiles.length > 0 ? `
+                    <div class="overview-card" style="margin-top: 20px;">
+                        <div class="overview-card-title">📄 CSS Files (${overview.cssFiles.length})</div>
+                        <div class="overview-list">
+                            ${overview.cssFiles.slice(0, 10).map((css, idx) => `
+                                <div class="overview-list-item">
+                                    <strong>${idx + 1}. ${css.href.split('/').pop() || css.href}</strong>
+                                    <span>Media: ${css.media}</span>
+                                </div>
+                            `).join('')}
+                            ${overview.cssFiles.length > 10 ? `<p style="text-align: center; color: var(--gray-600); font-size: 13px; margin-top: 8px;">... and ${overview.cssFiles.length - 10} more</p>` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${overview.jsFiles.length > 0 ? `
+                    <div class="overview-card" style="margin-top: 20px;">
+                        <div class="overview-card-title">📜 JavaScript Files (${overview.jsFiles.length})</div>
+                        <div class="overview-list">
+                            ${overview.jsFiles.slice(0, 10).map((js, idx) => `
+                                <div class="overview-list-item">
+                                    <strong>${idx + 1}. ${js.src.split('/').pop() || js.src}</strong>
+                                    <span>${js.async ? 'Async' : ''} ${js.defer ? 'Defer' : ''} ${!js.async && !js.defer ? 'Blocking' : ''}</span>
+                                </div>
+                            `).join('')}
+                            ${overview.jsFiles.length > 10 ? `<p style="text-align: center; color: var(--gray-600); font-size: 13px; margin-top: 8px;">... and ${overview.jsFiles.length - 10} more</p>` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function displayBreakdown(breakdown) {
+            const categories = {
+                performance: { name: 'Performance', icon: '⚡' },
+                seo: { name: 'SEO', icon: '🔍' },
+                accessibility: { name: 'Accessibility', icon: '♿' },
+                bestPractices: { name: 'Best Practices', icon: '✓' }
+            };
+
+            return Object.entries(categories).map(([key, category]) => {
+                const items = breakdown[key] || [];
+                if (items.length === 0) return '';
+
+                return `
+                    <div class="breakdown-category">
+                        <div class="breakdown-header">
+                            <div class="breakdown-header-icon ${key}">${category.icon}</div>
+                            <div class="breakdown-title">${category.name} Breakdown</div>
+                        </div>
+                        <div class="breakdown-items">
+                            ${items.map(item => `
+                                <div class="breakdown-item ${item.status}">
+                                    <div class="breakdown-check">
+                                        <div class="breakdown-check-name">${item.check}</div>
+                                        <div class="breakdown-check-reason">${item.reason}</div>
+                                    </div>
+                                    <div class="breakdown-points">
+                                        ${item.status === 'pass' ? 
+                                            `<div class="breakdown-points-badge pass">✓ Pass</div>` :
+                                            `<div class="breakdown-points-badge fail">-${item.points_lost} pts</div>`
+                                        }
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function animateScore(category, score) {
+            const circle = document.getElementById(`${category}Circle`);
+            const scoreEl = document.getElementById(`${category}Score`);
+            const circumference = 283;
+            const offset = circumference - (score / 100) * circumference;
+            
+            let color;
+            if (score >= 90) color = '#10b981';
+            else if (score >= 50) color = '#f59e0b';
+            else color = '#ef4444';
+            
+            circle.style.stroke = color;
+            circle.style.strokeDashoffset = offset;
+            circle.style.transition = 'stroke-dashoffset 1s ease-out';
+            
+            let current = 0;
+            const increment = score / 50;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= score) {
+                    current = score;
+                    clearInterval(timer);
+                }
+                scoreEl.textContent = Math.round(current);
+            }, 20);
+        }
+
+        function getIssueIcon(severity) {
+            const icons = {
+                success: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+                warning: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+                error: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+            };
+            return icons[severity] || icons.warning;
+        }
+
+        function formatMetricName(name) {
+            return name
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, str => str.toUpperCase())
+                .trim();
+        }
+    </script>
+</body>
+</html>
